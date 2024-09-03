@@ -1,0 +1,21 @@
+include:
+- compose-base.yaml
+
+name: frr-api-test
+
+services:
+  news-app:
+    extends:
+      file: compose.yaml
+      service: news-app
+    container_name: frr-news-app-api-test
+    depends_on:
+    - news-storage
+
+  news-storage:
+    container_name: frr-news-storage-api-test
+    extends:
+      file: compose.yaml
+      service: news-storage
+    volumes:
+      - ./storage/initdb:/docker-entrypoint-initdb.d
