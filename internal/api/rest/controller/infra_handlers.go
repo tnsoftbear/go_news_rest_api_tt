@@ -4,11 +4,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func GetPing(ctx *fiber.Ctx) error {
-	type Response struct {
-		Message string `json:"message"`
-	}
+type GetPingResponse struct{
+	Message string
+}
 
-	response := Response{Message: "pong"}
+// GetPing godoc
+// @Summary      Ping
+// @Description  Check service health by ping http request
+// @Tags         infra
+// @Produce      json
+// @Success      200  		{object}  controller.GetPingResponse
+// @Failure		 500
+// @Router       /ping [get]
+func GetPing(ctx *fiber.Ctx) error {
+	response := GetPingResponse{Message: "pong"}
 	return ctx.JSON(response)
 }

@@ -1,8 +1,8 @@
 package storage
 
 import (
-	"fiber-reform-rest/internal/core/domain/model"
 	"fmt"
+	"frr-news/internal/core/domain/model"
 	"log"
 	"strings"
 

@@ -2,8 +2,8 @@ package jwt
 
 import (
 	"errors"
-	"fiber-reform-rest/internal/infra/config"
 	"fmt"
+	"frr-news/internal/infra/config"
 	"log"
 	"time"
 

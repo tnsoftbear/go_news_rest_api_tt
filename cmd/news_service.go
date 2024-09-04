@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fiber-reform-rest/internal/api/bootstrap"
+	"frr-news/internal/api/bootstrap"
 )
 
 func main() {

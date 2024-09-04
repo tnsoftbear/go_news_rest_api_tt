@@ -41,6 +41,8 @@ gen: ## Generate code for reform logic
 	go generate ./...
 hurl: ## Run hurl API testing on localhost installation
 	hurl --variables-file=.\test\api\local-vars .\test\api\news.hurl
+swag:
+	swag init --dir . -g ./internal/api/rest/router/router.go
 test: ## Run unit tests
 	go test -count=1 ./...
 
@@ -49,7 +51,7 @@ dbdockerinit:
 dbup: dbdockerinit
 	docker run --name frr-news-storage -p3307:3306 --network frr-local \
 	-e MYSQL_ROOT_PASSWORD=pw -e MYSQL_DATABASE=frr -e MYSQL_USER=admin -e MYSQL_PASSWORD=123 \
-	-v E:/coding/my/go/own/fiber-reform-rest/deploy/docker/storage/initdb:/docker-entrypoint-initdb.d:ro \
+	-v E:/coding/repos/go/go_news_rest_api_tt/deploy/docker/storage/initdb:/docker-entrypoint-initdb.d:ro \
 	-d mysql:latest
 dbdown:
 	docker stop frr-news-storage
@@ -64,6 +66,8 @@ dbclientdown:
 	docker stop frr-mysql-client
 localdbclient:
 	mysql --port 3307 -uadmin -p --database frr
+appup:
+	go run .\cmd\
 
 .PHONY: \
 		apitest \

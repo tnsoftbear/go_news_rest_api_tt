@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	"fiber-reform-rest/internal/infra/config"
+	"frr-news/internal/infra/config"
 
 	"github.com/go-sql-driver/mysql"
 	"gopkg.in/reform.v1"

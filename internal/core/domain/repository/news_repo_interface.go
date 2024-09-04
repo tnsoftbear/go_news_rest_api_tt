@@ -1,6 +1,6 @@
 package repository
 
-import "fiber-reform-rest/internal/core/domain/model"
+import "frr-news/internal/core/domain/model"
 
 type NewsRepository interface {
 	AssignCategory(newsID, catID int64)

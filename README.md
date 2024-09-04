@@ -91,7 +91,7 @@ If a field is not provided in the input, that field should not be updated.
 ## Install and run
 
 Run `make up` to install and run the service in a Docker environment. It exposes endpoints on port 4000.  
-The Fiber dashboard is available at [http://localhost:4000/dashboard](http://localhost:4000/dashboard).
+The Fiber dashboard is available at [http://localhost:4000/dashboard](http://localhost:4000/dashboard) and Swagger API specification at [http://localhost:4000/swagger/](http://localhost:4000/swagger/).
 
 Check the service connection with a ping request:
 

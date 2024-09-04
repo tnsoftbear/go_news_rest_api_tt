@@ -1,24 +1,48 @@
 package router
 
 import (
-	"fiber-reform-rest/internal/api/rest/controller"
-	"fiber-reform-rest/internal/api/rest/middleware"
-	"fiber-reform-rest/internal/infra/config"
-	"fiber-reform-rest/internal/infra/security/jwt"
-	"fiber-reform-rest/internal/infra/storage"
+	"frr-news/internal/api/rest/auth"
+	"frr-news/internal/api/rest/controller"
+	"frr-news/internal/infra/config"
+	"frr-news/internal/infra/security/jwt"
+	"frr-news/internal/infra/storage"
+
+	_ "frr-news/docs"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/monitor"
+	"github.com/gofiber/swagger"
 	"gopkg.in/reform.v1"
 )
 
+// @title           News service
+// @version         0.0.1
+// @description     This is a testing task for implementing JSON REST API with fiber and reform.
+// @termsOfService  http://swagger.io/terms/
+
+// @contact.name   	Igor
+// @contact.url    	http://github.com/tnsoftbear
+// @contact.email  	myg0t@inbox.lv
+
+// @license.name  	MIT
+// @license.url   	https://rem.mit-license.org/
+
+// @host      		localhost:4000
+// @BasePath  		/
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
+// @externalDocs.description  REST API details
+// @externalDocs.url          https://github.com/tnsoftbear/go_news_rest_api_tt
 func Setup(app *fiber.App, reformDB *reform.DB, config *config.Config) {
 	newsRepo := storage.NewNewsRepositoryMysql(reformDB)
 	jm := jwt.NewJWTManager(&config.Auth.Jwt)
 	app.Use(logger.New())
-	
+
 	limitCfg := limiter.Config{
 		Max: 60,
 	}
@@ -27,9 +51,10 @@ func Setup(app *fiber.App, reformDB *reform.DB, config *config.Config) {
 	pub.Get("/ping", controller.GetPing)
 	pub.Get("/dashboard", monitor.New())
 	pub.Post("/login", func(ctx *fiber.Ctx) error { return controller.PostLogin(ctx, jm) })
+	pub.Get("/swagger/*", swagger.HandlerDefault)
 
 	api := app.Group("", limiter.New(limitCfg))
-	api.Use(middleware.Auth(&config.Auth))
+	api.Use(auth.Handler(&config.Auth))
 	api.Get("/list", func(ctx *fiber.Ctx) error { return controller.GetNewsList(ctx, newsRepo) })
 	api.Post("/add", func(ctx *fiber.Ctx) error { return controller.PostNewsAdd(ctx, newsRepo) })
 	api.Post("/add-category/:NewsId/:CatId", func(ctx *fiber.Ctx) error { return controller.PostNewsAddCategory(ctx, newsRepo) })

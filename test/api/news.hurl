@@ -17,7 +17,7 @@ body == "Unauthorized"
 POST {{url_base}}/login
 HTTP 200
 [Captures]
-token: jsonpath "$['Token']"
+token: jsonpath "$['token']"
 
 ### Ok: Get empty list when authorized
 GET {{url_base}}/list

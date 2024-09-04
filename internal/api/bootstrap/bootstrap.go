@@ -1,12 +1,12 @@
 package bootstrap
 
 import (
-	"fiber-reform-rest/internal/api/rest/router"
-	"fiber-reform-rest/internal/infra/config"
-	"fiber-reform-rest/internal/infra/env"
-	"fiber-reform-rest/internal/infra/storage"
 	"flag"
 	"fmt"
+	"frr-news/internal/api/rest/router"
+	"frr-news/internal/infra/config"
+	"frr-news/internal/infra/env"
+	"frr-news/internal/infra/storage"
 	"log"
 	"os"
 	"os/signal"
@@ -23,7 +23,7 @@ func Run() {
 	app := setupApp(config)
 
 	go func() {
-		listenAddr := fmt.Sprintf("%s:%d", config.App.Host,	config.App.Port)
+		listenAddr := fmt.Sprintf("%s:%d", config.App.Host, config.App.Port)
 		if err := app.Listen(listenAddr); err != nil {
 			log.Panic(err)
 		}
@@ -41,7 +41,7 @@ func Run() {
 func readConfig() *config.Config {
 	configPath := flag.String("config", "./config/core.yaml", "load configurations from a file")
 	flag.Parse()
-	
+
 	config, err := config.NewConfig(*configPath)
 	if err != nil {
 		log.Fatal(err)
@@ -54,8 +54,8 @@ func setupApp(config *config.Config) *fiber.App {
 	env.Setup()
 	reformDB := storage.Setup(&config.MysqlStorage)
 	app := fiber.New(fiber.Config{
-		AppName:       config.App.Name,
-		ServerHeader:  config.App.ServerHeader,
+		AppName:      config.App.Name,
+		ServerHeader: config.App.ServerHeader,
 	})
 	app.Use(recover.New())
 	app.Use(logger.New())

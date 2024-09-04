@@ -5,15 +5,15 @@ import (
 	"log"
 	"os"
 
-	"fiber-reform-rest/internal/infra/env"
+	"frr-news/internal/infra/env"
 
 	"gopkg.in/yaml.v3"
 )
 
 type App struct {
-	Host string `yaml:"host"`
-	Port int    `yaml:"port"`
-	Name string `yaml:"name"`
+	Host         string `yaml:"host"`
+	Port         int    `yaml:"port"`
+	Name         string `yaml:"name"`
 	ServerHeader string `yaml:"server_header"`
 }
 

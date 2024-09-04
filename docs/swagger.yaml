@@ -1,0 +1,297 @@
+basePath: /
+definitions:
+  auth.AccessToken:
+    properties:
+      token:
+        type: string
+    type: object
+  controller.DeleteNewsByIdResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  controller.GetNewsListResponse:
+    properties:
+      News:
+        items:
+          $ref: '#/definitions/model.News'
+        type: array
+      Success:
+        type: boolean
+    type: object
+  controller.GetPingResponse:
+    properties:
+      message:
+        type: string
+    type: object
+  controller.PostNewsAddCategoryResponse:
+    properties:
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  controller.PostNewsAddRequest:
+    properties:
+      Categories:
+        items:
+          type: integer
+        type: array
+      Content:
+        type: string
+      Id:
+        type: integer
+      Title:
+        type: string
+    type: object
+  controller.PostNewsAddResponse:
+    properties:
+      Categories:
+        items:
+          type: integer
+        type: array
+      Message:
+        type: string
+      News:
+        $ref: '#/definitions/model.News'
+      Success:
+        type: boolean
+    type: object
+  controller.PostNewsEditByIdRequest:
+    properties:
+      Categories:
+        items:
+          type: integer
+        type: array
+      Content:
+        type: string
+      Id:
+        type: integer
+      Title:
+        type: string
+    type: object
+  controller.PostNewsEditByIdResponse:
+    properties:
+      Categories:
+        items:
+          type: integer
+        type: array
+      Message:
+        type: string
+      News:
+        $ref: '#/definitions/model.News'
+      Success:
+        type: boolean
+    type: object
+  model.News:
+    properties:
+      categories:
+        items:
+          type: integer
+        type: array
+      content:
+        type: string
+      id:
+        description: primary key
+        type: integer
+      title:
+        type: string
+    type: object
+externalDocs:
+  description: REST API details
+  url: https://github.com/tnsoftbear/go_news_rest_api_tt
+host: localhost:4000
+info:
+  contact:
+    email: myg0t@inbox.lv
+    name: Igor
+    url: http://github.com/tnsoftbear
+  description: This is a testing task for implementing JSON REST API with fiber and
+    reform.
+  license:
+    name: MIT
+    url: https://rem.mit-license.org/
+  termsOfService: http://swagger.io/terms/
+  title: News service
+  version: 0.0.1
+paths:
+  /:NewsId:
+    delete:
+      consumes:
+      - application/json
+      description: Delete News record by ID
+      parameters:
+      - description: News record ID
+        in: path
+        name: NewsId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.DeleteNewsByIdResponse'
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Delete News
+      tags:
+      - news
+  /add:
+    post:
+      consumes:
+      - application/json
+      description: Add a News record
+      parameters:
+      - description: News record data
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PostNewsAddRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.PostNewsAddResponse'
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Add News
+      tags:
+      - news
+  /add-category/:NewsId/:CatId:
+    delete:
+      consumes:
+      - application/json
+      description: Assign category to some news record
+      parameters:
+      - description: News record ID
+        in: path
+        name: NewsId
+        required: true
+        type: integer
+      - description: Category ID
+        in: path
+        name: CatId
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.PostNewsAddCategoryResponse'
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Assign Category
+      tags:
+      - news
+  /edit/:Id:
+    post:
+      consumes:
+      - application/json
+      description: Modify the existing News record
+      parameters:
+      - description: News record ID
+        in: path
+        name: Id
+        required: true
+        type: integer
+      - description: News record data
+        in: body
+        name: req
+        required: true
+        schema:
+          $ref: '#/definitions/controller.PostNewsEditByIdRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.PostNewsEditByIdResponse'
+        "404":
+          description: Not Found
+      security:
+      - ApiKeyAuth: []
+      summary: Edit News
+      tags:
+      - news
+  /list:
+    get:
+      description: Retrieve news list at some page
+      parameters:
+      - description: 'Show page number (def: 1)'
+        in: query
+        name: page
+        type: integer
+      - description: 'Records per page (def: 10)'
+        in: query
+        name: per-page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.GetNewsListResponse'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      security:
+      - ApiKeyAuth: []
+      summary: News List
+      tags:
+      - news
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and provide access token
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/auth.AccessToken'
+        "500":
+          description: Internal Server Error
+          schema: {}
+      summary: Authentication
+      tags:
+      - auth
+  /ping:
+    get:
+      description: Check service health by ping http request
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/controller.GetPingResponse'
+        "500":
+          description: Internal Server Error
+      summary: Ping
+      tags:
+      - infra
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
