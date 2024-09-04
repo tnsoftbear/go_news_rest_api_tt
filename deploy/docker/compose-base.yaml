@@ -1,5 +1,0 @@
-networks:
-  news-storage:
-    name: frr-news-storage
-  news-public:
-    name: frr-news-public

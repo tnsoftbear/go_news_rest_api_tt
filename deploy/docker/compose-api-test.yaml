@@ -1,21 +1,51 @@
-include:
-- compose-base.yaml
-
-name: frr-api-test
+name: frrapit
 
 services:
   news-app:
-    extends:
-      file: compose.yaml
-      service: news-app
-    container_name: frr-news-app-api-test
+    build:
+      context: ../..
+      dockerfile: ./deploy/docker/app/Dockerfile
+    container_name: frrapit-news-app
     depends_on:
-    - news-storage
+      news-storage:
+        condition: service_healthy
+    environment:
+    - DB_HOST=frrapit-news-storage
+    env_file:
+    - path: ./.env
+      required: true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${APP_PORT}/ping"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 2s
+    networks:
+    - news-public-apit
+    - news-storage-apit
+    read_only: true
+    restart: unless-stopped
 
   news-storage:
-    container_name: frr-news-storage-api-test
-    extends:
-      file: compose.yaml
-      service: news-storage
+    container_name: frrapit-news-storage
+    env_file:
+    - path: ./.env
+      required: true
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent", "-u$${MYSQL_USER}", "-p$${MYSQL_PASSWORD}"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 1s
+    image: mysql:latest
+    networks:
+    - news-storage-apit
+    restart: unless-stopped
     volumes:
-      - ./storage/initdb:/docker-entrypoint-initdb.d
+    - ./storage/initdb:/docker-entrypoint-initdb.d
+
+networks:
+  news-storage-apit:
+    name: frrapit-news-storage
+  news-public-apit:
+    name: frrapit-news-public
