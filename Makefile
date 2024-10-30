@@ -28,7 +28,7 @@ apitestup: ## Start containers for API testing
 apitestdown: ## Stop containers for API testing
 	docker compose $(af) down
 apitestrun: ## Run Hurl testing scripts in docker container and in mutual network
-	docker run --rm -v .\test\:/test --net frrapit-news-public ghcr.io/orange-opensource/hurl:latest --test --color --variables-file=/test/api/docker-vars /test/api/news.hurl
+	docker run --rm -v ./test/:/test --net frrapit-news-public ghcr.io/orange-opensource/hurl:latest --test --color --variables-file=/test/api/docker-vars /test/api/news.hurl
 apitest: ## Build and start docker services and run API testing on them
 	@make apitestbuild
 	@make apitestup
@@ -40,8 +40,8 @@ apitest: ## Build and start docker services and run API testing on them
 gen: ## Generate code for reform logic
 	go generate ./...
 hurl: ## Run hurl API testing on localhost installation
-	hurl --variables-file=.\test\api\local-vars .\test\api\news.hurl
-swag:
+	hurl --variables-file=./test/api/local-vars ./test/api/news.hurl
+swag: ## Generate Swagger documentation for REST API
 	swag init --dir . -g ./internal/api/rest/router/router.go
 test: ## Run unit tests
 	go test -count=1 ./...
@@ -51,7 +51,7 @@ dbdockerinit:
 dbup: dbdockerinit
 	docker run --name frr-news-storage -p3307:3306 --network frr-local \
 	-e MYSQL_ROOT_PASSWORD=pw -e MYSQL_DATABASE=frr -e MYSQL_USER=admin -e MYSQL_PASSWORD=123 \
-	-v E:/coding/repos/go/go_news_rest_api_tt/deploy/docker/storage/initdb:/docker-entrypoint-initdb.d:ro \
+	-v /home/coding/repos/go/go_news_rest_api_tt/deploy/docker/storage/initdb:/docker-entrypoint-initdb.d:ro \
 	-d mysql:latest
 dbdown:
 	docker stop frr-news-storage
@@ -67,7 +67,7 @@ dbclientdown:
 localdbclient:
 	mysql --port 3307 -uadmin -p --database frr
 appup:
-	go run .\cmd\
+	go run ./cmd/
 
 .PHONY: \
 		apitest \

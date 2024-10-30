@@ -6,9 +6,9 @@
 
 Implement JSON REST API service with the following routes:
 
-* `POST /edit/:Id` * Update a news record by its Id.
 * `GET /list` - Retrieve a list of news records.
 * `POST /add` - Add a news record.
+* `POST /edit/:Id` * Update a news record by its Id.
 * `POST /add-category/:NewsId/:CategoryId` - Add a category to a news record.
 * `DELETE /:NewsId` - Delete a news record.
 

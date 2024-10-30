@@ -17,7 +17,8 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
-// Run initializes and starts web service with REST API
+// Run initializes and starts web service with REST API.
+// Graceful shutdown considered.
 func Run() {
 	config := readConfig()
 	app := setupApp(config)

@@ -29,14 +29,16 @@ type GetNewsListResponse struct {
 // @Success      200  {object}  controller.GetNewsListResponse
 // @Failure      500  {object}  error
 // @Router       /list [get]
-func GetNewsList(ctx *fiber.Ctx, repo repository.NewsRepository) error {
-	page := ctx.QueryInt("page", 1)
-	perPage := ctx.QueryInt("per-page", 10)
-	news := repo.LoadPagenated(page, perPage)
-	return ctx.JSON(&GetNewsListResponse{
-		Success: len(news) > 0,
-		News:    news,
-	})
+func GetNewsList(repo repository.NewsRepository) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		page := ctx.QueryInt("page", 1)
+		perPage := ctx.QueryInt("per-page", 10)
+		news := repo.LoadPagenated(page, perPage)
+		return ctx.JSON(&GetNewsListResponse{
+			Success: len(news) > 0,
+			News:    news,
+		})
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -67,59 +69,61 @@ type PostNewsEditByIdResponse struct {
 // @Success      200  		{object}  controller.PostNewsEditByIdResponse
 // @Failure		 404
 // @Router       /edit/:Id [post]
-func PostNewsEditById(ctx *fiber.Ctx, repo repository.NewsRepository) error {
-	var req PostNewsEditByIdRequest
-	err := ctx.BodyParser(&req)
-	if err != nil {
-		log.Printf("BodyParser error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
+func PostNewsEditById(repo repository.NewsRepository) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		var req PostNewsEditByIdRequest
+		err := ctx.BodyParser(&req)
+		if err != nil {
+			log.Printf("BodyParser error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
 
-	id, err := strconv.Atoi(ctx.Params("Id"))
-	if err != nil {
-		log.Printf("Route param parsing error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
-	newsID := int64(id)
+		id, err := strconv.Atoi(ctx.Params("Id"))
+		if err != nil {
+			log.Printf("Route param parsing error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
+		newsID := int64(id)
 
-	if newsID != req.ID {
-		message := fmt.Sprintf("News ID in route (ID: %d) does not match News record ID in request body (ID: %d)", newsID, req.ID)
-		log.Println(message)
+		if newsID != req.ID {
+			message := fmt.Sprintf("News ID in route (ID: %d) does not match News record ID in request body (ID: %d)", newsID, req.ID)
+			log.Println(message)
+			return ctx.JSON(&PostNewsEditByIdResponse{
+				Success: false,
+				Message: message,
+			})
+		}
+
+		newsModel := repo.FindByID(req.ID)
+		if newsModel == nil {
+			message := fmt.Sprintf("Cannot find News record (ID: %d)", req.ID)
+			return ctx.JSON(&PostNewsEditByIdResponse{
+				Success: false,
+				Message: message,
+			})
+		}
+
+		if req.Title != "" {
+			newsModel.Title = req.Title
+		}
+		if req.Content != "" {
+			newsModel.Content = req.Content
+		}
+
+		repo.Save(newsModel)
+
+		for _, catID := range req.Categories {
+			repo.AssignCategory(newsID, catID)
+		}
+		repo.UnassignCategories(newsID, req.Categories)
+
 		return ctx.JSON(&PostNewsEditByIdResponse{
-			Success: false,
-			Message: message,
+			Success:    true,
+			Message:    fmt.Sprintf("News updated (ID: %d)", newsID),
+			News:       *newsModel,
+			Categories: repo.LoadCategoryIDs(newsID),
 		})
 	}
-
-	newsModel := repo.FindByID(req.ID)
-	if newsModel == nil {
-		message := fmt.Sprintf("Cannot find News record (ID: %d)", req.ID)
-		return ctx.JSON(&PostNewsEditByIdResponse{
-			Success: false,
-			Message: message,
-		})
-	}
-
-	if req.Title != "" {
-		newsModel.Title = req.Title
-	}
-	if req.Content != "" {
-		newsModel.Content = req.Content
-	}
-
-	repo.Save(newsModel)
-
-	for _, catID := range req.Categories {
-		repo.AssignCategory(newsID, catID)
-	}
-	repo.UnassignCategories(newsID, req.Categories)
-
-	return ctx.JSON(&PostNewsEditByIdResponse{
-		Success:    true,
-		Message:    fmt.Sprintf("News updated (ID: %d)", newsID),
-		News:       *newsModel,
-		Categories: repo.LoadCategoryIDs(newsID),
-	})
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -149,29 +153,31 @@ type PostNewsAddResponse struct {
 // @Success      200  		{object}  controller.PostNewsAddResponse
 // @Failure		 404
 // @Router       /add [post]
-func PostNewsAdd(ctx *fiber.Ctx, repo repository.NewsRepository) error {
-	var req PostNewsAddRequest
-	err := ctx.BodyParser(&req)
-	if err != nil {
-		log.Printf("BodyParser error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
+func PostNewsAdd(repo repository.NewsRepository) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		var req PostNewsAddRequest
+		err := ctx.BodyParser(&req)
+		if err != nil {
+			log.Printf("BodyParser error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
 
-	newsModel := &model.News{
-		Title:   req.Title,
-		Content: req.Content,
-	}
-	repo.Save(newsModel)
-	for _, catID := range req.Categories {
-		repo.AssignCategory(newsModel.ID, catID)
-	}
+		newsModel := &model.News{
+			Title:   req.Title,
+			Content: req.Content,
+		}
+		repo.Save(newsModel)
+		for _, catID := range req.Categories {
+			repo.AssignCategory(newsModel.ID, catID)
+		}
 
-	return ctx.JSON(&PostNewsAddResponse{
-		Success:    true,
-		Message:    fmt.Sprintf("News added (ID: %d)", newsModel.ID),
-		News:       newsModel,
-		Categories: repo.LoadCategoryIDs(newsModel.ID),
-	})
+		return ctx.JSON(&PostNewsAddResponse{
+			Success:    true,
+			Message:    fmt.Sprintf("News added (ID: %d)", newsModel.ID),
+			News:       newsModel,
+			Categories: repo.LoadCategoryIDs(newsModel.ID),
+		})
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -192,17 +198,19 @@ type DeleteNewsByIdResponse struct {
 // @Success      200  		{object}  controller.DeleteNewsByIdResponse
 // @Failure		 404
 // @Router       /:NewsId [delete]
-func DeleteNewsById(ctx *fiber.Ctx, repo repository.NewsRepository) error {
-	newsID, err := strconv.Atoi(ctx.Params("NewsId"))
-	if err != nil {
-		log.Printf("Route param (NewsId) parsing error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
-	deletedNews := repo.DeleteNewsById(int64(newsID))
-	if deletedNews != nil {
-		return ctx.JSON(DeleteNewsByIdResponse{Success: true, Message: fmt.Sprintf("News record (ID: %d) is deleted", deletedNews.ID)})
-	} else {
-		return ctx.JSON(DeleteNewsByIdResponse{Success: false, Message: fmt.Sprintf("News record (ID: %d) not found", newsID)})
+func DeleteNewsById(repo repository.NewsRepository) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		newsID, err := strconv.Atoi(ctx.Params("NewsId"))
+		if err != nil {
+			log.Printf("Route param (NewsId) parsing error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
+		deletedNews := repo.DeleteNewsById(int64(newsID))
+		if deletedNews != nil {
+			return ctx.JSON(DeleteNewsByIdResponse{Success: true, Message: fmt.Sprintf("News record (ID: %d) is deleted", deletedNews.ID)})
+		} else {
+			return ctx.JSON(DeleteNewsByIdResponse{Success: false, Message: fmt.Sprintf("News record (ID: %d) not found", newsID)})
+		}
 	}
 }
 
@@ -225,22 +233,24 @@ type PostNewsAddCategoryResponse struct {
 // @Success      200  		{object}  controller.PostNewsAddCategoryResponse
 // @Failure		 404
 // @Router       /add-category/:NewsId/:CatId [post]
-func PostNewsAddCategory(ctx *fiber.Ctx, repo repository.NewsRepository) error {
-	newsID, err := strconv.Atoi(ctx.Params("NewsId"))
-	if err != nil {
-		log.Printf("Route param (NewsId) parsing error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
-	catID, err := strconv.Atoi(ctx.Params("CatId"))
-	if err != nil {
-		log.Printf("Route param (CatId) parsing error: %v\n", err)
-		return ctx.SendStatus(404)
-	}
-	if repo.FindByID(int64(newsID)) == nil {
-		return ctx.JSON(fiber.Map{"Success": false, "Message": fmt.Sprintf("Cannot find News record (ID: %d)", newsID)})
-	}
+func PostNewsAddCategory(repo repository.NewsRepository) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		newsID, err := strconv.Atoi(ctx.Params("NewsId"))
+		if err != nil {
+			log.Printf("Route param (NewsId) parsing error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
+		catID, err := strconv.Atoi(ctx.Params("CatId"))
+		if err != nil {
+			log.Printf("Route param (CatId) parsing error: %v\n", err)
+			return ctx.SendStatus(404)
+		}
+		if repo.FindByID(int64(newsID)) == nil {
+			return ctx.JSON(fiber.Map{"Success": false, "Message": fmt.Sprintf("Cannot find News record (ID: %d)", newsID)})
+		}
 
-	repo.AssignCategory(int64(newsID), int64(catID))
+		repo.AssignCategory(int64(newsID), int64(catID))
 
-	return ctx.JSON(PostNewsAddCategoryResponse{Success: true, Message: fmt.Sprintf("Category (ID: %d) assigned to news record (ID: %d)", catID, newsID)})
+		return ctx.JSON(PostNewsAddCategoryResponse{Success: true, Message: fmt.Sprintf("Category (ID: %d) assigned to news record (ID: %d)", catID, newsID)})
+	}
 }

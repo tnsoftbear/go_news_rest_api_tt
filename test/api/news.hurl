@@ -5,7 +5,7 @@ Content-type: any-content-type
 HTTP 200
 content-type: application/json
 content-length: 18
-{"message":"pong"}
+{"Message":"pong"}
 
 ### Fail: Cannot get list because unauthorized
 GET {{url_base}}/list

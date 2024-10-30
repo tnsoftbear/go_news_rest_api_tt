@@ -16,7 +16,9 @@ import (
 // @Success      200  {object}  auth.AccessToken
 // @Failure      500  {object}  error
 // @Router       /login [post]
-func PostLogin(ctx *fiber.Ctx, jm *jwt.JWTManager) error {
-	access_token := jm.Generate(&jwt.TokenPayload{ID: 1001})
-	return ctx.JSON(auth.AccessToken{Token: access_token})
+func PostLogin(jm *jwt.JWTManager) fiber.Handler {
+	return func(ctx *fiber.Ctx) error {
+		access_token := jm.Generate(&jwt.TokenPayload{ID: 1001})
+		return ctx.JSON(auth.AccessToken{Token: access_token})
+	}
 }
