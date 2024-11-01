@@ -4,7 +4,7 @@ af = -f deploy/docker/compose-api-test.yaml
 help: ## Print this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
 
-# Run in docker 
+# Run in docker
 
 build: ## Build docker containers
 	docker compose $(cf) build
@@ -16,7 +16,7 @@ rebuild: ## Rebuild and start docker containers
 	@make down
 	@make build
 	@make up
-restart: ## Restart
+restart: ## Restart docker containers
 	docker compose $(cf) restart
 
 # Hurl API testing in docker
@@ -37,14 +37,21 @@ apitest: ## Build and start docker services and run API testing on them
 
 # Local development
 
-gen: ## Generate code for reform logic
-	go generate ./...
 hurl: ## Run hurl API testing on localhost installation
 	hurl --variables-file=./test/api/local-vars ./test/api/news.hurl
+gen: ## Generate code for reform logic
+	go generate ./...
 swag: ## Generate Swagger documentation for REST API
 	swag init --dir . -g ./internal/api/rest/router/router.go
-test: ## Run unit tests
-	go test -count=1 ./...
+# test: ## Run unit tests
+# 	go test -count=1 ./...
+fmt: ## Format code
+	gofumpt -w .
+lint: ## Check linter inspections
+	golangci-lint run
+install-dev-tools: ## Install developer tools (linter, formatter)
+	go install mvdan.cc/gofumpt@latest
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 dbdockerinit:
 	docker network create frr-local
@@ -83,9 +90,12 @@ appup:
 		dbup \
 		dockerinit \
 		down \
+		fmt \
 		gen \
 		help \
 		hurl \
+		install-dev-tools \
+		lint \
 		localdbclient \
 		rebuild \
 		restart \

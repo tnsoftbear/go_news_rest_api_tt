@@ -4,7 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-type GetPingResponse struct{
+type GetPingResponse struct {
 	Message string
 }
 

@@ -3,9 +3,10 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"frr-news/internal/infra/config"
 	"log"
 	"time"
+
+	"frr-news/internal/infra/config"
 
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -59,7 +60,6 @@ func (j *JWTManager) parse(token string) (*jwt.Token, error) {
 // Verify verifies the jwt token against the secret
 func (j *JWTManager) Verify(token string) (*TokenPayload, error) {
 	parsed, err := j.parse(token)
-
 	if err != nil {
 		return nil, err
 	}

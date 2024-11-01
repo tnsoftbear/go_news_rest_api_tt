@@ -3,14 +3,15 @@ package bootstrap
 import (
 	"flag"
 	"fmt"
-	"frr-news/internal/api/rest/router"
-	"frr-news/internal/infra/config"
-	"frr-news/internal/infra/env"
-	"frr-news/internal/infra/storage"
 	"log"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"frr-news/internal/api/rest/router"
+	"frr-news/internal/infra/config"
+	"frr-news/internal/infra/env"
+	"frr-news/internal/infra/storage"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -35,7 +36,9 @@ func Run() {
 
 	<-c
 	fmt.Println("Gracefully shutting down...")
-	app.Shutdown()
+	if err := app.Shutdown(); err != nil {
+		log.Fatal("Application shutdown failed with error:", err)
+	}
 	fmt.Println("Application was successful shutdown.")
 }
 

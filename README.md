@@ -144,3 +144,18 @@ You can run the tests locally with `make hurl`.
 
 If you want to run API tests inside a Docker environment, call `make apitest`.
 This command creates application and data storage containers, then runs the tests on them.
+
+## Developer tools
+
+```sh
+# Install developer tooling at local host
+make install-dev-tools
+# Format code with the "gofumpt" help
+make fmt
+# Check code by linter
+make lint
+# Generate code for the "reform" models
+make gen
+# Generate Swagger documentation for REST API
+make swag
+```
