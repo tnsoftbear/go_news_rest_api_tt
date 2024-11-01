@@ -21,11 +21,11 @@ import (
 // Run initializes and starts web service with REST API.
 // Graceful shutdown considered.
 func Run() {
-	config := readConfig()
-	app := setupApp(config)
+	cfg := readConfig()
+	app := setupApp(cfg)
 
 	go func() {
-		listenAddr := fmt.Sprintf("%s:%d", config.App.Host, config.App.Port)
+		listenAddr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
 		if err := app.Listen(listenAddr); err != nil {
 			log.Panic(err)
 		}
@@ -46,23 +46,23 @@ func readConfig() *config.Config {
 	configPath := flag.String("config", "./config/core.yaml", "load configurations from a file")
 	flag.Parse()
 
-	config, err := config.NewConfig(*configPath)
+	cfg, err := config.NewConfig(*configPath)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return config
+	return cfg
 }
 
-func setupApp(config *config.Config) *fiber.App {
+func setupApp(cfg *config.Config) *fiber.App {
 	env.Setup()
-	reformDB := storage.Setup(&config.MysqlStorage)
+	reformDB := storage.Setup(&cfg.MysqlStorage)
 	app := fiber.New(fiber.Config{
-		AppName:      config.App.Name,
-		ServerHeader: config.App.ServerHeader,
+		AppName:      cfg.App.Name,
+		ServerHeader: cfg.App.ServerHeader,
 	})
 	app.Use(recover.New())
 	app.Use(logger.New())
-	router.Setup(app, reformDB, config)
+	router.Setup(app, reformDB, cfg)
 	return app
 }

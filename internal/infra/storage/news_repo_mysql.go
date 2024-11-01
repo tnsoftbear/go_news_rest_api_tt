@@ -39,7 +39,8 @@ func (r *NewsRepositoryMysql) LoadPagenated(page, perPage int) []*model.News {
 		results = append(results, &news)
 	}
 	if err != reform.ErrNoRows {
-		log.Fatal(err)
+		log.Print(err)
+		return nil;
 	}
 
 	return results
@@ -122,7 +123,7 @@ func (r *NewsRepositoryMysql) AssignCategory(newsID, catID int64) {
 func (r *NewsRepositoryMysql) UnassignCategories(newsID int64, skipIDs []int64) {
 	categoryIdCond := ""
 	if len(skipIDs) > 0 {
-		skipIDList := strings.Trim(strings.Replace(fmt.Sprint(skipIDs), " ", ",", -1), "[]")
+		skipIDList := strings.Trim(strings.ReplaceAll(fmt.Sprint(skipIDs), " ", ","), "[]")
 		categoryIdCond = fmt.Sprintf(" AND CategoryId NOT IN (%s)", skipIDList)
 	}
 	tail := fmt.Sprintf("WHERE NewsId = %d%s", newsID, categoryIdCond)

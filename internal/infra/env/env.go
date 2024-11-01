@@ -8,7 +8,7 @@ func Setup() {
 	viper.AutomaticEnv()
 }
 
-func GetStringEnv(key string, def string) string {
+func GetStringEnv(key, def string) string {
 	viper.SetDefault(key, def)
 	return viper.GetString(key)
 }

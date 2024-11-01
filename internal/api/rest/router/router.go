@@ -38,9 +38,9 @@ import (
 
 // @externalDocs.description  REST API details
 // @externalDocs.url          https://github.com/tnsoftbear/go_news_rest_api_tt
-func Setup(app *fiber.App, reformDB *reform.DB, config *config.Config) {
+func Setup(app *fiber.App, reformDB *reform.DB, cfg *config.Config) {
 	newsRepo := storage.NewNewsRepositoryMysql(reformDB)
-	jm := jwt.NewJWTManager(&config.Auth.Jwt)
+	jm := jwt.NewJWTManager(&cfg.Auth.Jwt)
 	app.Use(logger.New())
 
 	limitCfg := limiter.Config{
@@ -54,7 +54,7 @@ func Setup(app *fiber.App, reformDB *reform.DB, config *config.Config) {
 	pub.Get("/swagger/*", swagger.HandlerDefault)
 
 	api := app.Group("", limiter.New(limitCfg))
-	api.Use(auth.Handler(&config.Auth))
+	api.Use(auth.Handler(&cfg.Auth))
 	api.Get("/list", controller.GetNewsList(newsRepo))
 	api.Post("/add", controller.PostNewsAdd(newsRepo))
 	api.Post("/add-category/:NewsId/:CatId", controller.PostNewsAddCategory(newsRepo))
