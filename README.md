@@ -1,6 +1,14 @@
 # Testing task "REST API for the News service"
 
- #go #fiber #reform #mysql #rest-api #json-api #docker #api-test #hurl
+ #go #fiber #reform #mysql #rest-api #json-api #docker #api-test #hurl #swagger
+
+## TL;DR
+
+The implementation of a test task for a REST API using the Fiber framework and the Reform library for MySQL database interactions can be found in this repository. Authorization is supported using a JWT access token.  
+The project includes Swagger documentation for the API and containerized end-to-end testing with Hurl scripts.  
+The structure follows Clean Architecture recommendations. Code quality is ensured through the use of a linter and the gofumpt formatter.  
+Deployment is facilitated by Docker Compose. Health checks are implemented for both the application and data storage containers. The application supports graceful shutdown on interrupt signals.  
+The application can be configured via environment variables and a YAML configuration file.
 
 ## Excercise
 
@@ -14,9 +22,9 @@ Implement JSON REST API service with the following routes:
 
 For database storage, you can use either MySQL or PostgreSQL.
 
-The server is built using Fiber, and Reform is used for database interactions.
+The server is built using [Fiber](https://github.com/gofiber/fiber), and [Reform](https://github.com/go-reform/reform) is used for database interactions.
 
-The connection to the database should utilize a connection pool. All settings should be configured through environment variables and/or Viper.
+The connection to the database should utilize a connection pool. All settings should be configured through environment variables and/or [Viper](https://github.com/spf13/viper).
 
 ### DB schema
 

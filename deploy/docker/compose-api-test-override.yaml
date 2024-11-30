@@ -1,0 +1,21 @@
+name: frrapit
+
+services:
+  news-app:
+    container_name: frrapit-news-app
+    environment:
+    - DB_HOST=frrapit-news-storage
+    networks:
+    - news-public-apit
+    - news-storage-apit
+
+  news-storage:
+    container_name: frrapit-news-storage
+    networks:
+    - news-storage-apit
+
+networks:
+  news-storage-apit:
+    name: frrapit-news-storage
+  news-public-apit:
+    name: frrapit-news-public

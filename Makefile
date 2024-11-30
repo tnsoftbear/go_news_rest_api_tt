@@ -1,5 +1,6 @@
 cf = -f deploy/docker/compose.yaml
 af = -f deploy/docker/compose-api-test.yaml
+amf = -f deploy/docker/compose-api-test-override.yaml
 
 help: ## Print this help
 	@grep -E '^[a-zA-Z0-9_-]+:.*## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
@@ -22,11 +23,11 @@ restart: ## Restart docker containers
 # Hurl API testing in docker
 
 apitestbuild: ## Build containers for API testing
-	docker compose $(af) build
+	docker compose $(cf) $(amf) build
 apitestup: ## Start containers for API testing
-	docker compose $(af) up -d --remove-orphans
+	docker compose $(cf) $(amf) up -d --remove-orphans
 apitestdown: ## Stop containers for API testing
-	docker compose $(af) down
+	docker compose $(cf) $(amf) down
 apitestrun: ## Run Hurl testing scripts in docker container and in mutual network
 	docker run --rm -v ./test/:/test --net frrapit-news-public ghcr.io/orange-opensource/hurl:latest --test --color --variables-file=/test/api/docker-vars /test/api/news.hurl
 apitest: ## Build and start docker services and run API testing on them
