@@ -3,7 +3,7 @@ package jwt
 import (
 	"errors"
 	"fmt"
-	"log"
+	"github.com/sirupsen/logrus"
 	"time"
 
 	"frr-news/internal/infra/config"
@@ -28,10 +28,11 @@ func NewJWTManager(cfg *config.Jwt) *JWTManager {
 }
 
 // Generate generates the jwt token based on payload
-func (j *JWTManager) Generate(payload *TokenPayload) string {
+func (j *JWTManager) Generate(payload *TokenPayload) (string, error) {
 	v, err := time.ParseDuration(j.cfg.Expiration)
 	if err != nil {
-		log.Fatalf("Invalid time duration: %v", err)
+		logrus.WithField("error", err.Error()).Error("Invalid time duration")
+		return "", err
 	}
 
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -41,10 +42,11 @@ func (j *JWTManager) Generate(payload *TokenPayload) string {
 
 	token, err := t.SignedString([]byte(j.cfg.Tokenkey))
 	if err != nil {
-		log.Fatal(err)
+		logrus.WithField("error", err.Error()).Error("Cannot sign token")
+		return "", err
 	}
 
-	return token
+	return token, nil
 }
 
 func (j *JWTManager) parse(token string) (*jwt.Token, error) {

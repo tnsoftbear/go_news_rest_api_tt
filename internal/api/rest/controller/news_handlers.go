@@ -2,13 +2,15 @@ package controller
 
 import (
 	"fmt"
-	"log"
 	"strconv"
+	"strings"
 
 	"frr-news/internal/core/domain/model"
 	"frr-news/internal/core/domain/repository"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/sirupsen/logrus"
 )
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -44,17 +46,17 @@ func GetNewsList(repo repository.NewsRepository) fiber.Handler {
 ///////////////////////////////////////////////////////////////////////////////
 
 type PostNewsEditByIdRequest struct {
-	ID         int64   `json:"Id"`
-	Title      string  `json:"Title"`
-	Content    string  `json:"Content"`
+	ID         int64   `json:"Id" validate:"required"`
+	Title      string  `json:"Title" validate:"min=3"`
+	Content    string  `json:"Content" validate:"min=5"`
 	Categories []int64 `json:"Categories"`
 }
 
 type PostNewsEditByIdResponse struct {
-	Success    bool       `json:"Success"`
-	Message    string     `json:"Message"`
-	News       model.News `json:"News,omitempty"`
-	Categories []int64    `json:"Categories,omitempty"`
+	Success    bool        `json:"Success"`
+	Message    string      `json:"Message"`
+	News       *model.News `json:"News,omitempty"`
+	Categories []int64     `json:"Categories,omitempty"`
 }
 
 // PostNewsEditById godoc
@@ -74,20 +76,31 @@ func PostNewsEditById(repo repository.NewsRepository) fiber.Handler {
 		var req PostNewsEditByIdRequest
 		err := ctx.BodyParser(&req)
 		if err != nil {
-			log.Printf("BodyParser error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Body parsing failed")
 			return ctx.SendStatus(404)
 		}
 
 		id, err := strconv.Atoi(ctx.Params("Id"))
 		if err != nil {
-			log.Printf("Route param parsing error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Route param parsing failed")
 			return ctx.SendStatus(404)
 		}
 		newsID := int64(id)
 
+		validate := validator.New()
+		err = validate.Struct(req)
+		if err != nil {
+			message := composeValidationErrorMessages(err)
+			logrus.WithField("error", message).Debug("Request validation failed")
+			return ctx.JSON(&PostNewsEditByIdResponse{
+				Success: false,
+				Message: message,
+			})
+		}
+
 		if newsID != req.ID {
 			message := fmt.Sprintf("News ID in route (ID: %d) does not match News record ID in request body (ID: %d)", newsID, req.ID)
-			log.Println(message)
+			logrus.WithField("error", err.Error()).Debug(message)
 			return ctx.JSON(&PostNewsEditByIdResponse{
 				Success: false,
 				Message: message,
@@ -120,7 +133,7 @@ func PostNewsEditById(repo repository.NewsRepository) fiber.Handler {
 		return ctx.JSON(&PostNewsEditByIdResponse{
 			Success:    true,
 			Message:    fmt.Sprintf("News updated (ID: %d)", newsID),
-			News:       *newsModel,
+			News:       newsModel,
 			Categories: repo.LoadCategoryIDs(newsID),
 		})
 	}
@@ -130,15 +143,15 @@ func PostNewsEditById(repo repository.NewsRepository) fiber.Handler {
 
 type PostNewsAddRequest struct {
 	ID         int64   `json:"Id"`
-	Title      string  `json:"Title"`
-	Content    string  `json:"Content"`
+	Title      string  `json:"Title" validate:"required,min=3"`
+	Content    string  `json:"Content" validate:"min=5"`
 	Categories []int64 `json:"Categories"`
 }
 
 type PostNewsAddResponse struct {
 	Success    bool        `json:"Success"`
 	Message    string      `json:"Message"`
-	News       *model.News `json:"News"`
+	News       *model.News `json:"News,omitempty"`
 	Categories []int64     `json:"Categories,omitempty"`
 }
 
@@ -158,8 +171,19 @@ func PostNewsAdd(repo repository.NewsRepository) fiber.Handler {
 		var req PostNewsAddRequest
 		err := ctx.BodyParser(&req)
 		if err != nil {
-			log.Printf("BodyParser error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Body parsing failed")
 			return ctx.SendStatus(404)
+		}
+
+		validate := validator.New()
+		err = validate.Struct(req)
+		if err != nil {
+			message := composeValidationErrorMessages(err)
+			logrus.WithField("error", message).Debug("Request validation failed")
+			return ctx.JSON(&PostNewsAddResponse{
+				Success: false,
+				Message: message,
+			})
 		}
 
 		newsModel := &model.News{
@@ -202,7 +226,7 @@ func DeleteNewsById(repo repository.NewsRepository) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		newsID, err := strconv.Atoi(ctx.Params("NewsId"))
 		if err != nil {
-			log.Printf("Route param (NewsId) parsing error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Route param (NewsId) parsing failed")
 			return ctx.SendStatus(404)
 		}
 		deletedNews := repo.DeleteNewsById(int64(newsID))
@@ -237,12 +261,12 @@ func PostNewsAddCategory(repo repository.NewsRepository) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		newsID, err := strconv.Atoi(ctx.Params("NewsId"))
 		if err != nil {
-			log.Printf("Route param (NewsId) parsing error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Route param (NewsId) parsing failed")
 			return ctx.SendStatus(404)
 		}
 		catID, err := strconv.Atoi(ctx.Params("CatId"))
 		if err != nil {
-			log.Printf("Route param (CatId) parsing error: %v\n", err)
+			logrus.WithField("error", err.Error()).Debug("Route param (CatId) parsing failed")
 			return ctx.SendStatus(404)
 		}
 		if repo.FindByID(int64(newsID)) == nil {
@@ -253,4 +277,25 @@ func PostNewsAddCategory(repo repository.NewsRepository) fiber.Handler {
 
 		return ctx.JSON(PostNewsAddCategoryResponse{Success: true, Message: fmt.Sprintf("Category (ID: %d) assigned to news record (ID: %d)", catID, newsID)})
 	}
+}
+
+// ---
+
+func composeValidationErrorMessages(err error) string {
+	var errMessages []string
+	for _, err := range err.(validator.ValidationErrors) {
+		switch err.Tag() {
+		case "required":
+			errMessages = append(errMessages, fmt.Sprintf("Field '%s' is required", err.Field()))
+		case "email":
+			errMessages = append(errMessages, fmt.Sprintf("Field '%s' must be email\n", err.Field()))
+		case "gte":
+			errMessages = append(errMessages, fmt.Sprintf("Field '%s' must be greater or equal to %s\n", err.Field(), err.Param()))
+		case "lte":
+			errMessages = append(errMessages, fmt.Sprintf("Field '%s' must be less or equal to %s\n", err.Field(), err.Param()))
+		case "min":
+			errMessages = append(errMessages, fmt.Sprintf("Field '%s' must have at least %s characters\n", err.Field(), err.Param()))
+		}
+	}
+	return strings.Join(errMessages, "\n")
 }

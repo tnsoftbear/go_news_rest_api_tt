@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"flag"
 	"fmt"
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 	"os/signal"
@@ -24,20 +25,21 @@ func Run() {
 	cfg := readConfig()
 	app := setupApp(cfg)
 
-	go func() {
-		listenAddr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
-		if err := app.Listen(listenAddr); err != nil {
-			log.Panic(err)
-		}
-	}()
-
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+
+	go func() {
+		defer close(c)
+		listenAddr := fmt.Sprintf("%s:%d", cfg.App.Host, cfg.App.Port)
+		if err := app.Listen(listenAddr); err != nil {
+			logrus.WithField("error", err.Error()).Error(err)
+		}
+	}()
 
 	<-c
 	fmt.Println("Gracefully shutting down...")
 	if err := app.Shutdown(); err != nil {
-		log.Fatal("Application shutdown failed with error:", err)
+		logrus.WithField("error", err.Error()).Error("Application shutdown failed")
 	}
 	fmt.Println("Application was successful shutdown.")
 }
@@ -56,6 +58,8 @@ func readConfig() *config.Config {
 
 func setupApp(cfg *config.Config) *fiber.App {
 	env.Setup()
+	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetFormatter(&logrus.JSONFormatter{})
 	reformDB := storage.Setup(&cfg.MysqlStorage)
 	app := fiber.New(fiber.Config{
 		AppName:      cfg.App.Name,

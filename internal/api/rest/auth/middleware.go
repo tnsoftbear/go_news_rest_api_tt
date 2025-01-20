@@ -1,7 +1,8 @@
 package auth
 
 import (
-	"log"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"strings"
 
 	"frr-news/internal/infra/config"
@@ -15,13 +16,13 @@ func Handler(authCfg *config.Auth) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
 		authHeader := ctx.Get("Authorization")
 		if authHeader == "" {
-			log.Printf("Authorization header missed")
+			logrus.Debug("Authorization header missed")
 			return fiber.ErrUnauthorized
 		}
 
 		chunks := strings.Split(authHeader, " ")
 		if chunks[0] != "Bearer" {
-			log.Printf("Authorization header format must be \"Baerer <token>\", got: %s", authHeader)
+			logrus.Debug(fmt.Sprintf("Authorization header format must be \"Baerer <token>\", got: %s", authHeader))
 			return fiber.ErrUnauthorized
 		}
 

@@ -18,7 +18,14 @@ import (
 // @Router       /login [post]
 func PostLogin(jm *jwt.JWTManager) fiber.Handler {
 	return func(ctx *fiber.Ctx) error {
-		access_token := jm.Generate(&jwt.TokenPayload{ID: 1001})
-		return ctx.JSON(auth.AccessToken{Token: access_token})
+		accessToken, err := jm.Generate(&jwt.TokenPayload{ID: 1001})
+		if err != nil {
+			return ctx.JSON(struct {
+				Error string
+			}{
+				Error: err.Error(),
+			})
+		}
+		return ctx.JSON(auth.AccessToken{Token: accessToken})
 	}
 }
